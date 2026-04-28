@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PI·HIRE — Find Your Investigator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-logo" onclick="window.location='index.html'">
+      <div class="navbar-logo-icon">PI</div>
+      <div>
+        <div class="navbar-logo-text">PI<span>·</span>HIRE</div>
+        <div class="navbar-tagline">Verified Investigators Network</div>
+      </div>
+    </div>
+    <div class="navbar-actions">
+      <button class="btn-ghost">Post a Case</button>
+      <button class="btn-primary">Sign In</button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <span class="hero-eyebrow">India's Verified PI Network</span>
+    <h1 class="hero-title">Find Your <em>Private Investigator</em></h1>
+    <p class="hero-sub">Discreet, professional, and licensed investigators for every case type. Verified credentials. Guaranteed confidentiality.</p>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search by name, specialization, or location…" />
+      <button onclick="applyFilters()">Search</button>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats-strip">
+    <div class="stat-item"><div class="stat-number">200+</div><div class="stat-label">Investigators</div></div>
+    <div class="stat-item"><div class="stat-number">4,800+</div><div class="stat-label">Cases Solved</div></div>
+    <div class="stat-item"><div class="stat-number">18</div><div class="stat-label">States Covered</div></div>
+    <div class="stat-item"><div class="stat-number">100%</div><div class="stat-label">Confidential</div></div>
+  </div>
+
+  <!-- Filters -->
+  <section class="filter-section">
+    <span class="filter-label">Filter by Case Type</span>
+    <div class="filter-chips" id="filterChips">
+      <button class="chip active" data-cat="All" onclick="setCategory(this)">🔍 All</button>
+      <button class="chip" data-cat="Missing Person" onclick="setCategory(this)">👤 Missing Person</button>
+      <button class="chip" data-cat="Surveillance" onclick="setCategory(this)">📷 Surveillance</button>
+      <button class="chip" data-cat="Fraud" onclick="setCategory(this)">🔎 Fraud</button>
+      <button class="chip" data-cat="Background Check" onclick="setCategory(this)">📋 Background Check</button>
+    </div>
+  </section>
+
+  <!-- Listings -->
+  <section class="listings-section">
+    <div class="listings-header">
+      <div class="listings-count" id="listingsCount">Showing <strong>8</strong> investigators</div>
+      <select class="sort-select" id="sortSelect" onchange="applyFilters()">
+        <option value="rating">Sort: Top Rated</option>
+        <option value="experience">Sort: Most Experienced</option>
+        <option value="name">Sort: A–Z</option>
+      </select>
+    </div>
+    <div class="listings-grid" id="listingsGrid"></div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">© 2024 <span>PI·HIRE</span> — All rights reserved · Confidentiality Guaranteed · Licensed Investigators Only</footer>
+
+  <script src="data.js"></script>
+  <script>
+    let activeCategory = 'All';
+
+    function setCategory(btn) {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      activeCategory = btn.dataset.cat;
+      applyFilters();
+    }
+
+    function starsHTML(rating) {
+      let html = '<div class="stars">';
+      for (let i = 1; i <= 5; i++) {
+        html += `<span class="star ${i <= Math.round(rating) ? 'filled' : 'empty'}">★</span>`;
+      }
+      html += '</div>';
+      return html;
+    }
+
+    function applyFilters() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      const sort  = document.getElementById('sortSelect').value;
+
+      let list = [...investigators];
+
+      if (activeCategory !== 'All') {
+        list = list.filter(inv => inv.category === activeCategory);
+      }
+
+      if (query.trim()) {
+        list = list.filter(inv =>
+          inv.name.toLowerCase().includes(query) ||
+          inv.specialization.toLowerCase().includes(query) ||
+          inv.location.toLowerCase().includes(query) ||
+          inv.description.toLowerCase().includes(query)
+        );
+      }
+
+      if (sort === 'rating')     list.sort((a,b) => b.rating - a.rating);
+      if (sort === 'experience') list.sort((a,b) => b.experience - a.experience);
+      if (sort === 'name')       list.sort((a,b) => a.name.localeCompare(b.name));
+
+      renderCards(list);
+    }
+
+    function renderCards(list) {
+      const grid = document.getElementById('listingsGrid');
+      const count = document.getElementById('listingsCount');
+
+      const catLabel = activeCategory !== 'All' ? ` in <strong>${activeCategory}</strong>` : '';
+      count.innerHTML = `Showing <strong>${list.length}</strong> investigator${list.length !== 1 ? 's' : ''}${catLabel}`;
+
+      if (list.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <h3>No investigators found</h3>
+            <p>Try adjusting your search or changing the category filter.</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = list.map((inv, i) => `
+        <article class="card" style="animation-delay:${i * 60}ms" onclick="window.location='profile.html?id=${inv.id}'">
+          <div class="card-header">
+            <div class="card-avatar-wrap">
+              <img src="${inv.image}" alt="${inv.name}" class="card-avatar" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(inv.name)}&background=1a1a20&color=c9a84c&size=128'" />
+              <div class="card-verified">✓</div>
+            </div>
+            <div class="card-info">
+              <div class="card-name">${inv.name}</div>
+              <div class="card-spec" title="${inv.specialization}">${inv.specialization}</div>
+              <div class="card-location">📍 ${inv.location}</div>
+            </div>
+            ${inv.badge ? `<div class="card-badge">${inv.badge}</div>` : ''}
+          </div>
+          <div class="card-divider"></div>
+          <div class="card-body">
+            <p class="card-desc">${inv.description}</p>
+          </div>
+          <div class="card-meta">
+            <div class="card-rating">
+              ${starsHTML(inv.rating)}
+              <span class="rating-num">${inv.rating}</span>
+            </div>
+            <div class="card-exp">${inv.experience} yrs exp.</div>
+          </div>
+          <div class="card-footer">
+            <span class="card-category">${inv.category}</span>
+            <button class="btn-view" onclick="event.stopPropagation(); window.location='profile.html?id=${inv.id}'">View Profile →</button>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    // Live search on typing
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+
+    // Initial render
+    applyFilters();
+  </script>
+</body>
+</html>
